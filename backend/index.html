@@ -1,10 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>GCPUG Shared Spanner</title>
 </head>
 <body>
-
+<h1>GCPUG Shared Spanner</h1>
+<p>個人では試すのが難しいお値段のGoogle Cloud SpannerのInstanceを作成しています。</p>
+<ul>
+    <li>SLO 10% / 管理者は @sinmetal ですが、さほど管理してないです。</li>
+    <li>データの永続性の保証はありません。時折、クリーンアップするかも</li>
+    <li>1 Nodeです。/ 試しに負荷をかけたりしてもかまいませんが、1 Nodeしかないので、さほどスケールしないです。</li>
+    <li>us-central1 Regionを利用しているので、App EngineやCompute Engine, Functionもus-central1 Regionがおすすめです。</li>
+</ul>
+<h2>GCPUG Shared Spannerの使い方</h2>
+<p>
+  <a href="https://spanner.gcpug.jp/swagger-ui/index.html">GCPUG Shared Spanner登録Form</a> からGCPUGで利用しているSlackID, 及びSpannerにアクセスするためのService Accountを登録
+</p>
+<img src="/static/image/gcpug-shared-spanner-swagger-form.png" width="1280">
+<p>
+  登録に成功すれば、 <a href="https://console.cloud.google.com/spanner/instances/merpay-sponsored-instance/databases?project=gcpug-public-spanner&organizationId=69098872916">GCP Console</a> が見えるようになります。
+</p>
+<img src="/static/image/gcpug-public-spanner.png" width="1280">
+<p>
+    GCPUG SlackIDと同じ名前のDATABASEを作成して、SpannerをEnjoyしてください。分からないことがあれば、 GCPUG Slack #g-spanner へ！
+</p>
+<h3>よくある質問</h3>
+<ul>
+  <li>Q : GCPUG Slackに参加していなくても使えますか？ / A : 使えません。適当に連絡をGCPUG Slackで取っているので、GCPUG Slackに参加が必須になります。</li>
+  <li>Q : 複数DATABASEを作ってもいいですか？ / A : 数個ぐらいなら大丈夫です。sinmetal-1 みたいな感じで、GCPUG Slack IDをPrefixにしておいてください。</li>
+  <li>Q : 負荷をかけてもいいですか？ / A : かまいませんが、やる時に、 #g-spanner でいくぜー！！！！と叫ぶとよいかもしれません。</li>
+  <li>Q : サービスを運用するDBとして使ってもいいですか？ / A : かまいませんが、SLO 10%な上に、時折Instanceごと作り直して、データをふっとばしたりします。</li>
+  <li>Q : 誤操作で自分以外のDATABASEを削除してしまいました。 / A : #g-spanner ですまんかった！と伝えてあげてください。</li>
+</ul>
+<h2>Sponsor</h2>
+<p>GCPUG Shared Spannerは <a href="https://jp.merpay.com/">株式会社メルペイ</a> のお金で動いています。</p>
+<h2>その他のSpanner Shared Service</h2>
+<p>
+  Cloud AceがSpannerのトライアルと、Instanceの共有サービスを提供しています。
+  <a href="https://www.cloud-ace.jp/pages/press_sharedspanner/">Cloud Spanner シェアードサービスを提供開始しました</a>
+  こっちはデータを永続化することもできるみたいで、サービスのDATABASEとしても利用することができます。
+</p>
 </body>
 </html>

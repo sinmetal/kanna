@@ -18,11 +18,11 @@ var _ datastore.KeyLoader = &SpannerAccount{}
 type SpannerAccount struct {
 	Key             datastore.Key `datastore:"-" json:"-"`
 	KeyStr          string        `datastore:"-" json:"key"`
-	GCPUGSlackID string `json:"gcpugSlackId"`
-	ServiceAccounts []string `json:"serviceAccounts"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
-	SchemaVersion   int `json:"-"`
+	GCPUGSlackID    string        `json:"gcpugSlackId"`
+	ServiceAccounts []string      `json:"serviceAccounts"`
+	CreatedAt       time.Time     `json:"createdAt"`
+	UpdatedAt       time.Time     `json:"updatedAt"`
+	SchemaVersion   int           `json:"-"`
 }
 
 // LoadKey is Entity Load時にKeyを設定する
@@ -79,16 +79,45 @@ func (store *SpannerAccountStore) NameKey(ctx context.Context, name string) data
 }
 
 // Create is SpannerAccountをDatastoreにputする
-func (store *SpannerAccountStore) Put(ctx context.Context, key datastore.Key, e *SpannerAccount) (*SpannerAccount, error) {
+func (store *SpannerAccountStore) Upsert(ctx context.Context, key datastore.Key, e *SpannerAccount) (*SpannerAccount, error) {
 	ds := store.DatastoreClient
 
-	_, err := ds.Put(ctx, key, e)
+	var se SpannerAccount
+	_, err := ds.RunInTransaction(ctx, func(tx datastore.Transaction) error {
+		if err := ds.Get(ctx, key, &se); err != nil {
+			if err != datastore.ErrNoSuchEntity {
+				return errors.Wrap(err, fmt.Sprintf("failed get SpannerAccount from Datastore. key=%v", key))
+			}
+		}
+
+		sam := make(map[string]string)
+		for _, sa := range se.ServiceAccounts {
+			sam[sa] = sa
+		}
+
+		se.GCPUGSlackID = e.GCPUGSlackID
+		for _, sa := range e.ServiceAccounts {
+			log.Infof(ctx, "%s is request SA", sa)
+			if _, ok := sam[sa]; !ok {
+				log.Infof(ctx, "%s is add", sa)
+				se.ServiceAccounts = append(se.ServiceAccounts, sa)
+			}
+		}
+
+		_, err := ds.Put(ctx, key, &se)
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed put SpannerAccount to Datastore. key=%v", key))
+		}
+		se.Key = key
+		se.KeyStr = key.Encode()
+
+		return nil
+	})
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("failed put SpannerAccount to Datastore. key=%v", key))
+		return nil, errors.Wrap(err, fmt.Sprintf("failed commit SpannerAccount to Datastore. key=%v", key))
 	}
-	e.Key = key
-	e.KeyStr = key.Encode()
-	return e, nil
+
+	return &se, nil
 }
 
 // Get is SpannerAccountをDatastoreからgetする

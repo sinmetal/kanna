@@ -26,7 +26,7 @@ type SpannerAccountAPI struct{}
 
 // SpannerAccountAPIPostRequest is Organization Admin Post API Request
 type SpannerAccountAPIPostRequest struct {
-	GCPUGSlackID string `json:"gcpugSlackId"`
+	GCPUGSlackID    string   `json:"gcpugSlackId"`
 	ServiceAccounts []string `json:"serviceAccounts"`
 }
 
@@ -57,8 +57,8 @@ func (api *SpannerAccountAPI) Post(ctx context.Context, form *SpannerAccountAPIP
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "error"}
 	}
 
-	res, err := store.Put(ctx, store.NameKey(ctx, u.Email), &SpannerAccount{
-		GCPUGSlackID: form.GCPUGSlackID,
+	res, err := store.Upsert(ctx, store.NameKey(ctx, u.Email), &SpannerAccount{
+		GCPUGSlackID:    form.GCPUGSlackID,
 		ServiceAccounts: form.ServiceAccounts,
 	})
 	if err != nil {
