@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -9,13 +8,9 @@ import (
 
 	"github.com/favclip/ucon"
 	"github.com/favclip/ucon/swagger"
-	"go.mercari.io/datastore"
-	"go.mercari.io/datastore/aedatastore"
-	"google.golang.org/appengine"
 )
 
-func init() {
-	ucon.Middleware(UseAppengineContext)
+func Setup() {
 	ucon.Orthodox()
 	ucon.Middleware(swagger.RequestValidator())
 
@@ -37,25 +32,8 @@ func init() {
 	ucon.Plugin(swPlugin)
 
 	setupSpannerAccountAPI(swPlugin)
-
-	ucon.DefaultMux.Prepare()
 	http.Handle("/api/", ucon.DefaultMux)
-}
-
-// UseAppengineContext is UseAppengineContext
-func UseAppengineContext(b *ucon.Bubble) error {
-	if b.Context == nil {
-		b.Context = appengine.NewContext(b.R)
-	} else {
-		b.Context = appengine.WithContext(b.Context, b.R)
-	}
-
-	return b.Next()
-}
-
-// FromContext is Create Datastore Client from Context
-func FromContext(ctx context.Context) (datastore.Client, error) {
-	return aedatastore.FromContext(ctx)
+	ucon.DefaultMux.Prepare()
 }
 
 // HTTPError is API Resposeとして返すError

@@ -3,11 +3,15 @@ package backend
 import (
 	"context"
 	"fmt"
+
 	"time"
 
+	cds "cloud.google.com/go/datastore"
 	"github.com/pkg/errors"
+	metadatabox "github.com/sinmetal/gcpbox/metadata"
+	"github.com/vvakame/sdlog/aelog"
 	"go.mercari.io/datastore"
-	"google.golang.org/appengine/log"
+	"go.mercari.io/datastore/clouddatastore"
 )
 
 var _ datastore.PropertyLoadSaver = &SpannerAccount{}
@@ -60,9 +64,19 @@ type SpannerAccountStore struct {
 
 // NewSpannerAccountStore is SpannerAccountStoreを作成
 func NewSpannerAccountStore(ctx context.Context) (*SpannerAccountStore, error) {
-	ds, err := FromContext(ctx)
+	pID, err := metadatabox.ProjectID()
 	if err != nil {
-		log.Errorf(ctx, "failed Datastore New Client: %+v", err)
+		aelog.Errorf(ctx, "failed get project id: %+v", err)
+		return nil, err
+	}
+	cdsClient, err := cds.NewClient(ctx, pID)
+	if err != nil {
+		aelog.Errorf(ctx, "failed get project id: %+v", err)
+		return nil, err
+	}
+	ds, err := clouddatastore.FromClient(ctx, cdsClient)
+	if err != nil {
+		aelog.Errorf(ctx, "failed Datastore New Client: %+v", err)
 		return nil, err
 	}
 	return &SpannerAccountStore{ds}, nil
@@ -97,9 +111,9 @@ func (store *SpannerAccountStore) Upsert(ctx context.Context, key datastore.Key,
 
 		se.GCPUGSlackID = e.GCPUGSlackID
 		for _, sa := range e.ServiceAccounts {
-			log.Infof(ctx, "%s is request SA", sa)
+			aelog.Infof(ctx, "%s is request SA", sa)
 			if _, ok := sam[sa]; !ok {
-				log.Infof(ctx, "%s is add", sa)
+				aelog.Infof(ctx, "%s is add", sa)
 				se.ServiceAccounts = append(se.ServiceAccounts, sa)
 			}
 		}
