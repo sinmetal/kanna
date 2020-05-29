@@ -6,8 +6,8 @@ import (
 
 	"github.com/favclip/ucon"
 	"github.com/favclip/ucon/swagger"
-	"google.golang.org/appengine/log"
-	"google.golang.org/appengine/user"
+	"github.com/sinmetal/gcpbox/iap"
+	"github.com/vvakame/sdlog/aelog"
 )
 
 func setupSpannerAccountAPI(swPlugin *swagger.Plugin) {
@@ -35,11 +35,17 @@ type SpannerAccountAPIPostResponse struct {
 	*SpannerAccount
 }
 
+type User struct {
+	Email string
+}
+
 // Post is SpannerAccountを登録する
-func (api *SpannerAccountAPI) Post(ctx context.Context, form *SpannerAccountAPIPostRequest) (*SpannerAccountAPIPostResponse, error) {
-	u := user.Current(ctx)
-	if u == nil {
+func (api *SpannerAccountAPI) Post(ctx context.Context, r *http.Request, form *SpannerAccountAPIPostRequest) (*SpannerAccountAPIPostResponse, error) {
+	u, err := iap.GetUserForAppEngine(r)
+	if err == iap.ErrNotLogin {
 		return nil, &HTTPError{Code: http.StatusForbidden, Message: "Login Required"}
+	} else if err != nil {
+		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "InternalServerError"}
 	}
 
 	if form.GCPUGSlackID == "" {
@@ -47,13 +53,13 @@ func (api *SpannerAccountAPI) Post(ctx context.Context, form *SpannerAccountAPIP
 	}
 
 	if err := AddSpannerIAM(ctx, u.Email, form.ServiceAccounts); err != nil {
-		log.Errorf(ctx, "failed Add IAM : %s, error = %+v", u.Email, err)
+		aelog.Errorf(ctx, "failed Add IAM : %s, error = %+v", u.Email, err)
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "error"}
 	}
 
 	store, err := NewSpannerAccountStore(ctx)
 	if err != nil {
-		log.Errorf(ctx, "failed NewSpannerAccountStore: %+v", err)
+		aelog.Errorf(ctx, "failed NewSpannerAccountStore: %+v", err)
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "error"}
 	}
 
@@ -62,7 +68,7 @@ func (api *SpannerAccountAPI) Post(ctx context.Context, form *SpannerAccountAPIP
 		ServiceAccounts: form.ServiceAccounts,
 	})
 	if err != nil {
-		log.Errorf(ctx, "failed Put to Datastore : %s, error = %+v", u.Email, err)
+		aelog.Errorf(ctx, "failed Put to Datastore : %s, error = %+v", u.Email, err)
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "error"}
 	}
 

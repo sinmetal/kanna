@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/vvakame/sdlog/aelog"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v1"
-	"google.golang.org/appengine/log"
 )
 
 // AddSpannerIAM is SpannerのIAMをAccountに追加する
@@ -31,7 +31,7 @@ func AddSpannerIAM(ctx context.Context, googleAccount string, serviceAccounts []
 
 	bs := []*cloudresourcemanager.Binding{}
 	for _, b := range p.Bindings {
-		log.Infof(ctx, "%+v", b)
+		aelog.Infof(ctx, "%+v", b)
 		if b.Role == "roles/spanner.databaseAdmin" || b.Role == "roles/spanner.viewer" {
 			b.Members = append(b.Members, fmt.Sprintf("user:%s", googleAccount))
 			for _, sa := range serviceAccounts {
